@@ -1,15 +1,29 @@
-from locust import HttpUser, task, constant, TaskSet
+import json
+
+from locust import HttpUser, constant, SequentialTaskSet, task
 
 
 # Define all tasks in task set
-class Function(TaskSet):
+class Function(SequentialTaskSet):
     # token_string = ""
     def __init__(self, parent):
+        print("init function \n")
         super().__init__(parent)
         self.token_string = ""
         self.org_id = ""
+        self.headers = {}
 
-    @task
+    def on_start(self):
+        print("On Start \n")
+        self.token_string, self.org_id = self.login_user()
+        # print("Token -->", self.token_string)
+        # print("\n OrgID -->", self.org_id)
+        self.headers = {
+            'Authorization': 'Bearer ' + self.token_string,
+            'Accept': 'application/ion+json',
+            "Content-Type": "text/plain"
+        }
+
     def login_user(self):
         response = self.client.post("/guest/login", json=
         {
@@ -17,25 +31,20 @@ class Function(TaskSet):
             "password": "Hello@123!"
         }
                                     )
-
-        print("Task 1")
-        # fetch token
+        # fetch token and org
         json_var = response.json()
-        self.user.token_string = json_var["token"]
-        # print("\n token: " + self.user.token_string)
 
-        # fetch orgid
         organizations = json_var["organizations"]
-        self.user.org_id = organizations[0]["id"]
-        # print("\n orgID: " + org_id)
+        org_id = organizations[0]["id"]
+        return json_var["token"], org_id
 
     @task
     def read_applications(self):
         response = self.client.get(
             "/api/applications?limit=1",
-            headers={"authorization": "Token " + self.user.token_string}
+            headers=self.headers
         )
-        print("Task 2")
+        print("Task 1")
         # print("\n token: " + self.user.token_string)
         # print("\n response: " + response.text)
         json_var = response.json()
@@ -45,21 +54,18 @@ class Function(TaskSet):
 
     @task
     def create_applications(self):
-        response = self.client.post("/api/applications",
-                                    headers={"authorization": "Token " + self.user.token_string},
-                                    json={
-                                        "organization": '"' + self.user.org_id + '"',
-                                        "name": "performance",
-                                        "status": "active"
-                                    }
-                                    )
-        print("Task 3")
-        # print("\n token: " + self.user.token_string)
-        print("\n response: " + response.text)
-        # json_var = response.json()
+        payload = json.dumps({
+            "name": "performance2",
+            "organization": "d455f391-17c0-4057-9661-51294010f41c",
+            "status": "active"
+        })
+        response1 = self.client.post("/api/applications", headers=self.headers, json=payload)
+        print("Task 2")
+        # print(self.headers)
+        print(payload)
+        print(self.org_id)
+        print("\n response: " + response1.text)
         # print("\n applications: " + str(json_var))
-
-        print(self.user.org_id)
 
 
 # Define user/ httpuser to trigger and execute functionperf class
