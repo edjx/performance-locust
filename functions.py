@@ -1,9 +1,16 @@
 import json
+import string
+import random
 
 from locust import HttpUser, constant, SequentialTaskSet, task
 
 
 # Define all tasks in task set
+def id_generator(size=6):
+    chars = string.ascii_uppercase + string.digits
+    return ''.join(random.choice(chars) for _ in range(size))
+
+
 class Function(SequentialTaskSet):
     # token_string = ""
     def __init__(self, parent):
@@ -21,7 +28,7 @@ class Function(SequentialTaskSet):
         self.headers = {
             'Authorization': 'Bearer ' + self.token_string,
             'Accept': 'application/ion+json',
-            "Content-Type": "text/plain"
+            "Content-Type": "application/json"
         }
 
     def login_user(self):
@@ -54,12 +61,13 @@ class Function(SequentialTaskSet):
 
     @task
     def create_applications(self):
+        random_name = id_generator(3)
         payload = json.dumps({
-            "name": "performance2",
+            "name": random_name,
             "organization": "d455f391-17c0-4057-9661-51294010f41c",
             "status": "active"
         })
-        response1 = self.client.post("/api/applications", headers=self.headers, json=payload)
+        response1 = self.client.post("/api/applications", headers=self.headers, data=payload)
         print("Task 2")
         # print(self.headers)
         print(payload)
