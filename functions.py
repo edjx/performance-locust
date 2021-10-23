@@ -1,8 +1,9 @@
 import json
 import string
 import random
+import time
 
-from locust import HttpUser, constant, SequentialTaskSet, task
+from locust import HttpUser, SequentialTaskSet, task, constant, tag
 
 
 # Define all tasks in task set
@@ -14,7 +15,7 @@ def id_generator(size=6):
 class Function(SequentialTaskSet):
     # Constant(wait_time), Constant_pacing(wait_time), between(min, max),
     # These function inject time b/w tasks
-    wait_time = constant(1)
+    wait_time = constant(2)
 
     def __init__(self, parent):
         print("init function \n")
@@ -116,13 +117,12 @@ class Function(SequentialTaskSet):
         print(func_name + " :is Deployed")
         return func_name
 
-    def get_url_from_function(self, func_name):
+    def get_url_from_function(self, app_id, func_name):
         print("Get execute URL from function" + func_name)
-        response = self.client.get("/api/applications/" + self.app_id + "/functions/" + func_name,
+        response = self.client.get("/api/applications/" + app_id + "/functions/" + func_name,
                                    headers=self.headers)
         json_var = response.json()
-        # print("parse response: " + str(json_var["execute"]))
-        # print("get url response" + response.text)
+        # print("get_url_from_function response" + response.text)
         execute = json_var["execute"]
         execute_url = execute["href"]
         return execute_url
@@ -150,28 +150,33 @@ class Function(SequentialTaskSet):
             "Content-Type": "application/json"
         }
 
-        self.app_id = self.create_applications()
-        self.func_name = self.create_deploy_functions(self.app_id)
-        self.func_execute_url = self.get_url_from_function(self.func_name)
+        # self.app_id = self.create_applications()
+        # self.func_name = self.create_deploy_functions(self.app_id)
+        # self.func_execute_url = self.get_url_from_function(self.app_id, self.func_name)
         # print("func URL -> " + self.func_execute_url)
 
+    @tag('exe_func')
     @task
     def function_executor(self):
-        print("\n executing function url: " + self.func_execute_url)
-        response = self.client.get(self.func_execute_url)
-        # json_var = response.json()
-        print("Executor response: " + response.text)
+        func_url = "https://c64394df-f664-4f43-8c56-99a4c895417e.fn.load.edjx.network/IXT2"
+        response = self.client.get(func_url)
         assert response.text == "Hello World"
 
-    # @task
-    def create_function_load(self):
+    @tag('e2e')
+    @task
+    def e2e_function_executor(self):
         app_id = self.create_applications()
         func_name = self.create_deploy_functions(app_id)
-        # func_execute_url = self.get_url_from_function(self.func_name)
+        # time.sleep(2)
+        func_execute_url = self.get_url_from_function(app_id, func_name)
+        response = self.client.get(func_execute_url)
+        assert response.text == "Hello World"
+        self.delete_function(app_id, func_name)
         self.delete_applications(app_id)
+        # time.sleep(2)
 
-    def on_stop(self):
-        self.delete_applications(self.app_id)
+    # def on_stop(self):
+    #     self.delete_applications(self.app_id)
 
 
 # Define user/ httpuser to trigger and execute functionperf class
