@@ -16,7 +16,6 @@ class Function(SequentialTaskSet):
     # These function inject time b/w tasks
     wait_time = constant(1)
 
-    # token_string = ""
     def __init__(self, parent):
         print("init function \n")
         super().__init__(parent)
@@ -24,18 +23,8 @@ class Function(SequentialTaskSet):
         self.org_id = ""
         self.app_id = ""
         self.func_name = ""
+        self.func_execute_url = ""
         self.headers = {}
-
-    def on_start(self):
-        print("On Start \n")
-        self.token_string, self.org_id = self.login_user()
-        # print("Token -->", self.token_string)
-        # print("\n OrgID -->", self.org_id)
-        self.headers = {
-            'Authorization': 'Bearer ' + self.token_string,
-            'Accept': 'application/ion+json',
-            "Content-Type": "application/json"
-        }
 
     def login_user(self):
         response = self.client.post("/guest/login", json=
@@ -51,7 +40,6 @@ class Function(SequentialTaskSet):
         org_id = organizations[0]["id"]
         return json_var["token"], org_id
 
-    @task
     def read_applications(self):
         response = self.client.get(
             "/api/applications?limit=1",
@@ -62,7 +50,6 @@ class Function(SequentialTaskSet):
         # json_var = response.json()
         # print("\n applications: " + str(json_var))
 
-    @task
     def create_applications(self):
         random_name = id_generator(3)
         payload = json.dumps({
@@ -73,11 +60,10 @@ class Function(SequentialTaskSet):
         print("Create Application")
         response = self.client.post("/api/applications", headers=self.headers, data=payload)
         json_var = response.json()
-        self.app_id = json_var["id"]
-        print("\n appID: " + self.app_id)
+        return json_var["id"]
+        # print("\n appID: " + self.app_id)
 
-    @task
-    def create_deploy_functions(self):
+    def create_deploy_functions(self, app_id):
         random_name = id_generator(4)
 
         # Create
@@ -93,24 +79,23 @@ class Function(SequentialTaskSet):
             "policies": []
         })
         print("Create function")
-        response = self.client.post("/api/applications/" + self.app_id + "/deployments",
+        response = self.client.post("/api/applications/" + app_id + "/deployments",
                                     headers=self.headers,
                                     data=payload)
         json_var = response.json()
-        # print("Create func" + response.text)
-        self.func_name = json_var["name"]
+        func_name = json_var["name"]
 
         deploy_section = json_var["deploy"]
         update_section = json_var["update"]
         deploy_url = deploy_section["href"]
         callback_url = update_section["href"]
 
-        print("\n func_name: " + self.func_name)
-        print("\n deploy url: " + deploy_url)
-        print("\n callback url: " + callback_url)
+        # print("\n func_name: " + self.func_name)
+        # print("\n deploy url: " + deploy_url)
+        # print("\n callback url: " + callback_url)
 
         # deploy
-        print("Deployment")
+        print("Deploy function")
         filename = 'hello_world.wasm'
         payload = {'peer-addrs': '',
                    'notary': 'false',
@@ -125,15 +110,68 @@ class Function(SequentialTaskSet):
         }
 
         response = self.client.put(deploy_url, headers=headers, data=payload, files=files)
-        # json_var = response.json()
-        print("Deployment response -> : " + response.text)
+        json_var = response.json()
+        status = json_var["status"]
+        assert status == "accepted"
+        print(func_name + " :is Deployed")
+        return func_name
 
-   # @task
-    def delete_applications(self):
+    def get_url_from_function(self, func_name):
+        print("Get execute URL from function" + func_name)
+        response = self.client.get("/api/applications/" + self.app_id + "/functions/" + func_name,
+                                   headers=self.headers)
+        json_var = response.json()
+        # print("parse response: " + str(json_var["execute"]))
+        # print("get url response" + response.text)
+        execute = json_var["execute"]
+        execute_url = execute["href"]
+        return execute_url
+
+    def delete_applications(self, app_id):
         print("delete applications")
-        response = self.client.delete("/api/applications/" + self.app_id, headers=self.headers)
+        response = self.client.delete("/api/applications/" + app_id, headers=self.headers)
         json_var = response.json()
         print("\n delete response: " + str(json_var))
+
+    def delete_function(self, app_id, func_name):
+        print("delete applications")
+        response = self.client.delete("/api/applications/" + app_id + "/functions/" + func_name,
+                                      headers=self.headers)
+        json_var = response.json()
+        print("\n delete response: " + str(json_var))
+
+    def on_start(self):
+        print("On Start \n")
+        self.token_string, self.org_id = self.login_user()
+        # print("\n OrgID -->", self.org_id)
+        self.headers = {
+            'Authorization': 'Bearer ' + self.token_string,
+            'Accept': 'application/ion+json',
+            "Content-Type": "application/json"
+        }
+
+        self.app_id = self.create_applications()
+        self.func_name = self.create_deploy_functions(self.app_id)
+        self.func_execute_url = self.get_url_from_function(self.func_name)
+        # print("func URL -> " + self.func_execute_url)
+
+    @task
+    def function_executor(self):
+        print("\n executing function url: " + self.func_execute_url)
+        response = self.client.get(self.func_execute_url)
+        # json_var = response.json()
+        print("Executor response: " + response.text)
+        assert response.text == "Hello World"
+
+    # @task
+    def create_function_load(self):
+        app_id = self.create_applications()
+        func_name = self.create_deploy_functions(app_id)
+        # func_execute_url = self.get_url_from_function(self.func_name)
+        self.delete_applications(app_id)
+
+    def on_stop(self):
+        self.delete_applications(self.app_id)
 
 
 # Define user/ httpuser to trigger and execute functionperf class
