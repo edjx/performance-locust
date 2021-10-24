@@ -2,11 +2,15 @@ import json
 import string
 import random
 import time
+from urllib import request
 
-from locust import HttpUser, SequentialTaskSet, task, constant, tag
-
+import requests
+from locust import HttpUser, SequentialTaskSet, task, constant, tag, TaskSet
 
 # Define all tasks in task set
+from requests import get
+
+
 def id_generator(size=6):
     chars = string.ascii_uppercase + string.digits
     return ''.join(random.choice(chars) for _ in range(size))
@@ -155,13 +159,6 @@ class Function(SequentialTaskSet):
         # self.func_execute_url = self.get_url_from_function(self.app_id, self.func_name)
         # print("func URL -> " + self.func_execute_url)
 
-    @tag('exe_func')
-    @task
-    def function_executor(self):
-        func_url = "https://c64394df-f664-4f43-8c56-99a4c895417e.fn.load.edjx.network/IXT2"
-        response = self.client.get(func_url)
-        assert response.text == "Hello World"
-
     @tag('e2e')
     @task
     def e2e_function_executor(self):
@@ -179,7 +176,27 @@ class Function(SequentialTaskSet):
     #     self.delete_applications(self.app_id)
 
 
+class Resources(TaskSet):
+
+    @tag('exe_func')
+    @task
+    def function_executor(self):
+        # https://60ede549-9b58-4245-a2cf-0e929fe341f2--ttrkr.fn.load.edjx.network/HelloWorld
+        uuid = "60ede549-9b58-4245-a2cf-0e929fe341f2"
+        const_host = ".fn.load.edjx.network"
+        func_name = "/HelloWorld"
+        geohash = random.choice(['ttrkr', '9q8yy', '9q8yw', '9q8yq', '9q8ym', 'dr5ru', 'tdr1v'])
+
+        func_url = "https://" + uuid + "--" + geohash + const_host + func_name
+        print('URL->' + func_url)
+        with self.client.get(func_url, catch_response=True, name="Function Executor", stream=True) as response:
+            # print("-->", response.Requests.)
+            print(dir(response.request.body))
+            print("--> ", response.request.headers)
+            assert response.text == "Hello World"
+
+
 # Define user/ httpuser to trigger and execute functionperf class
 class TaskExecutor(HttpUser):
     host = "https://api.load.edjx.network"
-    tasks = [Function]
+    tasks = [Resources]
