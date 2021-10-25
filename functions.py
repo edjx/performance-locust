@@ -178,6 +178,15 @@ class Function(SequentialTaskSet):
 
 class Resources(TaskSet):
 
+    def get_geohash(self, location):
+        geohash = {'India': ['ttrkr', 'tdqfr', 'tepeu'],  # near Delhi, banglore, hyderabad
+                   'US': ['9q8yy', 'dr5ru', '9v9d', 'c22zr'],  # sanFran, NYC, texas, seattle
+                   'global': ['gc6m2', 'gcpuv', 'u4xez', 'sycu2', 'tzhuv', 'w68nr'],
+                   # ireland, UK, norway, turkey, china, thailand
+                   '134.122.3.240': 'New York',
+                   }
+        return geohash[location]
+
     @tag('exe_func')
     @task
     def function_executor(self):
@@ -185,15 +194,26 @@ class Resources(TaskSet):
         uuid = "60ede549-9b58-4245-a2cf-0e929fe341f2"
         const_host = ".fn.load.edjx.network"
         func_name = "/HelloWorld"
-        geohash = random.choice(['ttrkr', '9q8yy', '9q8yw', '9q8yq', '9q8ym', 'dr5ru', 'tdr1v'])
+        # geohash = random.choice(['ttrkr', '9q8yy', '9q8yw', '9q8yq', '9q8ym', 'dr5ru', 'tdr1v'])
+        geohash = random.choice(self.get_geohash('US'))
+        load_nodes = {'64.227.186.81': 'Banglore',
+                      '64.227.176.181': 'Banglore',
+                      '167.71.183.84': 'New York',
+                      '134.122.3.240': 'New York',
+                      '137.184.10.253': 'San Francisco',
+                      '164.90.145.242': 'San Francisco',
+                      '137.184.10.173': 'San Francisco',
+                      '165.232.129.105': 'San Francisco'
+                      }
 
         func_url = "https://" + uuid + "--" + geohash + const_host + func_name
-        print('URL->' + func_url)
+        # print('URL->' + func_url)
         with self.client.get(func_url, catch_response=True, name="Function Executor", stream=True) as response:
-            # print("-->", response.Requests.)
-            print("peer address is ", response.raw._connection.sock.getpeername())
-            print(dir(response.request.body))
-            print("--> ", response.request.headers)
+            remote_address, port = response.raw._connection.sock.getpeername()
+
+            # print("remote address is--> ", remote_address)
+            print('\n URL: ' + func_url)
+            print('Serving Node: ' + load_nodes[remote_address]+' IP: ' + remote_address + '\n')
             assert response.text == "Hello World"
 
 
