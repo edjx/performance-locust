@@ -191,6 +191,7 @@ class Resources(TaskSet):
         print('URL->' + func_url)
         with self.client.get(func_url, catch_response=True, name="Function Executor", stream=True) as response:
             # print("-->", response.Requests.)
+            print("peer address is ", response.raw._connection.sock.getpeername())
             print(dir(response.request.body))
             print("--> ", response.request.headers)
             assert response.text == "Hello World"
