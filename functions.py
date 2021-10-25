@@ -36,8 +36,8 @@ class Function(SequentialTaskSet):
         {
             "email": "edjperformance@mailinator.com",
             "password": "Hello@123"
-        }
-                                    )
+        },
+                                    name='Login')
         # fetch token and org
         json_var = response.json()
 
@@ -48,8 +48,8 @@ class Function(SequentialTaskSet):
     def read_applications(self):
         response = self.client.get(
             "/api/applications?limit=1",
-            headers=self.headers
-        )
+            headers=self.headers,
+            name='Read Applications')
         print("Read application")
         # print("\n response: " + response.text)
         # json_var = response.json()
@@ -63,7 +63,7 @@ class Function(SequentialTaskSet):
             "status": "active"
         })
         print("Create Application")
-        response = self.client.post("/api/applications", headers=self.headers, data=payload)
+        response = self.client.post("/api/applications", name='Create Application', headers=self.headers, data=payload)
         json_var = response.json()
         return json_var["id"]
         # print("\n appID: " + self.app_id)
@@ -85,6 +85,7 @@ class Function(SequentialTaskSet):
         })
         print("Create function")
         response = self.client.post("/api/applications/" + app_id + "/deployments",
+                                    name='Create Function',
                                     headers=self.headers,
                                     data=payload)
         json_var = response.json()
@@ -114,7 +115,7 @@ class Function(SequentialTaskSet):
             'Authorization': 'Bearer ' + self.token_string
         }
 
-        response = self.client.put(deploy_url, headers=headers, data=payload, files=files)
+        response = self.client.put(deploy_url,name='Deploy Function', headers=headers, data=payload, files=files)
         json_var = response.json()
         status = json_var["status"]
         assert status == "accepted"
@@ -124,7 +125,7 @@ class Function(SequentialTaskSet):
     def get_url_from_function(self, app_id, func_name):
         print("Get execute URL from function" + func_name)
         response = self.client.get("/api/applications/" + app_id + "/functions/" + func_name,
-                                   headers=self.headers)
+                                   name='Read Function', headers=self.headers)
         json_var = response.json()
         # print("get_url_from_function response" + response.text)
         execute = json_var["execute"]
@@ -133,13 +134,14 @@ class Function(SequentialTaskSet):
 
     def delete_applications(self, app_id):
         print("delete applications")
-        response = self.client.delete("/api/applications/" + app_id, headers=self.headers)
+        response = self.client.delete("/api/applications/" + app_id, name='Delete Application', headers=self.headers)
         json_var = response.json()
         print("\n delete response: " + str(json_var))
 
     def delete_function(self, app_id, func_name):
         print("delete applications")
         response = self.client.delete("/api/applications/" + app_id + "/functions/" + func_name,
+                                      name='Delete Function',
                                       headers=self.headers)
         json_var = response.json()
         print("\n delete response: " + str(json_var))
@@ -166,7 +168,7 @@ class Function(SequentialTaskSet):
         func_name = self.create_deploy_functions(app_id)
         # time.sleep(2)
         func_execute_url = self.get_url_from_function(app_id, func_name)
-        response = self.client.get(func_execute_url)
+        response = self.client.get(func_execute_url, name='Function Executor',)
         assert response.text == "Hello World"
         self.delete_function(app_id, func_name)
         self.delete_applications(app_id)
@@ -179,23 +181,16 @@ class Function(SequentialTaskSet):
 class Resources(TaskSet):
 
     def get_geohash(self, location):
-        geohash = {'India': ['ttrkr', 'tdqfr', 'tepeu'],  # near Delhi, banglore, hyderabad
-                   'US': ['9q8yy', 'dr5ru', '9v9d', 'c22zr'],  # sanFran, NYC, texas, seattle
-                   'global': ['gc6m2', 'gcpuv', 'u4xez', 'sycu2', 'tzhuv', 'w68nr'],
+        geohash = {'India': ['ttrkr', 'tdqfr', 'tepeu', 'ttnfyr', 'ttp52'],
+                   # near Delhi, banglore, hyderabad, shashtri, airforce
+                   'US': ['9q8yy', 'dr5ru', 'dqcjr', 'c22zr'],  # sanFran, NYC, washington, seattle
+                   'Global': ['gc6m2', 'gcpuv', 'u4xez', 'sycu2', 'tzhuv', 'w68nr'],
                    # ireland, UK, norway, turkey, china, thailand
                    '134.122.3.240': 'New York',
                    }
         return geohash[location]
 
-    @tag('exe_func')
-    @task
-    def function_executor(self):
-        # https://60ede549-9b58-4245-a2cf-0e929fe341f2--ttrkr.fn.load.edjx.network/HelloWorld
-        uuid = "60ede549-9b58-4245-a2cf-0e929fe341f2"
-        const_host = ".fn.load.edjx.network"
-        func_name = "/HelloWorld"
-        # geohash = random.choice(['ttrkr', '9q8yy', '9q8yw', '9q8yq', '9q8ym', 'dr5ru', 'tdr1v'])
-        geohash = random.choice(self.get_geohash('US'))
+    def get_current_node(self, ip_address):
         load_nodes = {'64.227.186.81': 'Banglore',
                       '64.227.176.181': 'Banglore',
                       '167.71.183.84': 'New York',
@@ -205,19 +200,30 @@ class Resources(TaskSet):
                       '137.184.10.173': 'San Francisco',
                       '165.232.129.105': 'San Francisco'
                       }
+        return load_nodes[ip_address]
+
+    @tag('exe_func')
+    @task
+    def function_executor(self):
+        # https://60ede549-9b58-4245-a2cf-0e929fe341f2--ttrkr.fn.load.edjx.network/HelloWorld
+        uuid = "60ede549-9b58-4245-a2cf-0e929fe341f2"
+        const_host = ".fn.load.edjx.network"
+        func_name = "/HelloWorld"
+        # geohash = random.choice(['ttrkr', '9q8yy', '9q8yw', '9q8yq', '9q8ym', 'dr5ru', 'tdr1v'])
+        # geohash = 'ttqds'
+        geohash = random.choice(self.get_geohash('US'))
 
         func_url = "https://" + uuid + "--" + geohash + const_host + func_name
         # print('URL->' + func_url)
-        with self.client.get(func_url, catch_response=True, name="Function Executor", stream=True) as response:
+        with self.client.get(func_url, catch_response=True, name='Function Executor', stream=True) as response:
             remote_address, port = response.raw._connection.sock.getpeername()
-
-            # print("remote address is--> ", remote_address)
-            print('\n URL: ' + func_url)
-            print('Serving Node: ' + load_nodes[remote_address]+' IP: ' + remote_address + '\n')
+            print('\nURL: ' + func_url)
+            print('Serving Node: ' + remote_address + ' (' + self.get_current_node(remote_address) + ')\n')
             assert response.text == "Hello World"
 
+        # Define user/ httpuser to trigger and execute functionperf class
 
-# Define user/ httpuser to trigger and execute functionperf class
+
 class TaskExecutor(HttpUser):
     host = "https://api.load.edjx.network"
-    tasks = [Resources]
+    tasks = [Function]
