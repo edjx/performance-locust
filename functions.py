@@ -40,6 +40,7 @@ class Function(SequentialTaskSet):
     @task
     def e2e_function_executor(self):
         app_id = create_applications(self, self.org_id)
+        read_all_applications(self)
         func_name = create_deploy_functions(self, app_id)
         func_execute_url = get_url_from_function(self, app_id, func_name)
 
@@ -55,6 +56,7 @@ class Function(SequentialTaskSet):
         bucket_id = create_bucket(self, self.org_id)
         # print("id -->", bucket_id)
         upload_file(self, bucket_id)
+
         delete_bucket(self, bucket_id)
 
     # def on_stop(self):
@@ -85,3 +87,4 @@ class Resources(TaskSet):
 class TaskExecutor(HttpUser):
     host = "https://api.load.edjx.network"
     tasks = [Function, Resources]
+

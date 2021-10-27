@@ -22,15 +22,12 @@ def login_user(self):
 
 # ******* All things Applications *******#
 
-def read_applications(self):
-    response = self.client.get(
-        "/api/applications?limit=1",
-        headers=self.headers,
-        name='Read Applications')
-    print("Read application")
+def read_all_applications(self):
+    logging.info("Read applications")
+    with self.client.get("/api/applications?limit=1", headers=self.headers,
+                         name='Read Applications') as response:
+        response.status_code = 200
     # print("\n response: " + response.text)
-    # json_var = response.json()
-    # print("\n applications: " + str(json_var))
 
 
 def create_applications(self, org_id):
@@ -43,8 +40,8 @@ def create_applications(self, org_id):
     print("Create Application")
     response = self.client.post("/api/applications", name='Create Application', headers=self.headers, data=payload)
     json_var = response.json()
+    # print(response.text)
     return json_var["id"]
-    # print("\n appID: " + self.app_id)
 
 
 def create_deploy_functions(self, app_id):
@@ -198,6 +195,7 @@ def upload_file(self, bucket_id):
     response = self.client.put(upload_url, name='Upload File', headers=headers, data=payload, files=files)
     json_var = response.json()
     status = json_var["status"]
+    print(response.text)
     assert status == "accepted"
 
     print(file_name + " : File is uploaded")
