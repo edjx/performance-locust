@@ -1,4 +1,5 @@
 import json
+import logging
 import string
 import random
 from common.modules import *
@@ -35,11 +36,10 @@ class Function(SequentialTaskSet):
             "Content-Type": "application/json"
         }
 
-
-    @tag('e2e')
+    @tag('e2e_function')
     @task
     def e2e_function_executor(self):
-        app_id = create_applications(self)
+        app_id = create_applications(self, self.org_id)
         func_name = create_deploy_functions(self, app_id)
         func_execute_url = get_url_from_function(self, app_id, func_name)
 
@@ -49,6 +49,13 @@ class Function(SequentialTaskSet):
         delete_function(self, app_id, func_name)
         delete_applications(self, app_id)
 
+    @tag('e2e_bucket')
+    @task
+    def e2e_file_upload(self):
+        bucket_id = create_bucket(self, self.org_id)
+        # print("id -->", bucket_id)
+        upload_file(self, bucket_id)
+        delete_bucket(self, bucket_id)
 
     # def on_stop(self):
     #     self.delete_applications(self.app_id)
@@ -77,4 +84,4 @@ class Resources(TaskSet):
 
 class TaskExecutor(HttpUser):
     host = "https://api.load.edjx.network"
-    tasks = [Resources]
+    tasks = [Function, Resources]
