@@ -1,5 +1,6 @@
 # This file contains all reusable functions
 import json
+import logging
 
 from common.utils import *
 
@@ -7,7 +8,7 @@ from common.utils import *
 def login_user(self):
     response = self.client.post("/guest/login", json=
     {
-        "email": "edjperformance@mailinator.com",
+        "email": "manualtest@mailinator.com",
         "password": "Hello@123"
     },
                                 name='Login')
@@ -18,6 +19,8 @@ def login_user(self):
     org_id = organizations[0]["id"]
     return json_var["token"], org_id
 
+
+# ******* All things Applications *******#
 
 def read_applications(self):
     response = self.client.get(
@@ -30,11 +33,11 @@ def read_applications(self):
     # print("\n applications: " + str(json_var))
 
 
-def create_applications(self):
+def create_applications(self, org_id):
     random_name = id_generator(3)
     payload = json.dumps({
         "name": random_name,
-        "organization": "" + self.org_id + "",
+        "organization": "" + org_id + "",
         "status": "active"
     })
     print("Create Application")
@@ -124,3 +127,78 @@ def delete_function(self, app_id, func_name):
                                   headers=self.headers)
     json_var = response.json()
     print("\n delete response: " + str(json_var))
+
+
+# ******* All things Buckets *******#
+
+def create_bucket(self, org_id):
+    logging.info("Create bucket")
+    random_name = "load_" + id_generator(3)
+    payload = json.dumps({
+        "name": random_name,
+        "organization": "" + org_id + "",
+        "description": "from load scripts"
+    })
+    response = self.client.post("/api/buckets", name='Create Bucket', headers=self.headers, data=payload)
+    json_var = response.json()
+    # print("bucket create response: ", response.text)
+    return json_var["id"]
+
+
+def delete_bucket(self, bucket_id):
+    logging.info("Delete bucket")
+    response = self.client.delete("/api/buckets/" + bucket_id, name='Delete Bucket', headers=self.headers)
+    json_var = response.json()
+    print("\n delete response: " + str(json_var))
+
+
+def upload_file(self, bucket_id):
+    logging.info("Create file")
+    random_name = "loadfile_" + id_generator(3)
+    payload = json.dumps({
+        "bucket": bucket_id,
+        "name": random_name,
+        "properties": [
+            {
+                "key": "Content-Type",
+                "value": "image/jpeg"
+            }
+        ],
+        "status": "success",
+        "cid": "123s4588",
+        "size": 4357
+    })
+
+    # Create file
+    response = self.client.post("/api/buckets/" + bucket_id + "/uploads",
+                                name='Create File',
+                                headers=self.headers,
+                                data=payload)
+    json_var = response.json()
+    file_name = json_var["name"]
+
+    # Get upload and call back url
+    upload_section = json_var["upload"]
+    callback_url = json_var["href"]
+    upload_url = upload_section["href"]
+
+    # Upload file
+    logging.info("Uploading file")
+    filename = 'edjqa-logo.png'
+    payload = {
+        'callBackURL': callback_url
+    }
+    files = [
+        ('content', (filename, open(filename, 'rb'),
+                     'image/png'))
+    ]
+    headers = {
+        'Authorization': 'Bearer ' + self.token_string
+    }
+    response = self.client.put(upload_url, name='Upload File', headers=headers, data=payload, files=files)
+    json_var = response.json()
+    status = json_var["status"]
+    assert status == "accepted"
+
+    print(file_name + " : File is uploaded")
+    # return func_name
