@@ -2,6 +2,8 @@ import json
 import logging
 import string
 import random
+import urllib
+
 from common.modules import *
 from common.utils import *
 import requests
@@ -53,10 +55,20 @@ class Function(SequentialTaskSet):
     @tag('e2e_bucket')
     @task
     def e2e_file_upload(self):
+        # Create resource
         bucket_id = create_bucket(self, self.org_id)
-        # print("id -->", bucket_id)
-        upload_file(self, bucket_id)
+        filename = upload_file(self, bucket_id)
+        download_url = get_url_from_file(self, bucket_id, filename)
+        # print("download URL,--> ", download_url)
 
+        # Download file
+        with self.client.get(download_url, name='File Download') as response:
+            assert response.status_code == 200
+            # print("download URL response -->", response.status_code)
+            logging.info("file downloaded successfully")
+
+        # Delete resources
+        delete_file(self, bucket_id, filename)
         delete_bucket(self, bucket_id)
 
     # def on_stop(self):
@@ -87,4 +99,3 @@ class Resources(TaskSet):
 class TaskExecutor(HttpUser):
     host = "https://api.load.edjx.network"
     tasks = [Function, Resources]
-
