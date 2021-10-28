@@ -8,7 +8,7 @@ from common.utils import *
 def login_user(self):
     response = self.client.post("/guest/login", json=
     {
-        "email": "manualtest@mailinator.com",
+        "email": "manualtest2@mailinator.com",
         "password": "Hello@123"
     },
                                 name='Login')
@@ -16,7 +16,7 @@ def login_user(self):
     json_var = response.json()
 
     organizations = json_var["organizations"]
-    org_id = organizations[0]["id"]
+    org_id = organizations[2]["id"]
     return json_var["token"], org_id
 
 
@@ -134,7 +134,8 @@ def create_bucket(self, org_id):
     payload = json.dumps({
         "name": random_name,
         "organization": "" + org_id + "",
-        "description": "from load scripts"
+        "description": "from load scripts",
+        "isPublic": "true"
     })
     response = self.client.post("/api/buckets", name='Create Bucket', headers=self.headers, data=payload)
     json_var = response.json()
@@ -199,4 +200,23 @@ def upload_file(self, bucket_id):
     assert status == "accepted"
 
     print(file_name + " : File is uploaded")
-    # return func_name
+    return file_name
+
+
+def get_url_from_file(self, bucket_id, file_name):
+    print("Get download URL from file: " + file_name)
+    response = self.client.get("/api/buckets/" + bucket_id + "/files/" + file_name,
+                               name='Read File', headers=self.headers)
+    json_var = response.json()
+    # print("get_url_from_function response" + response.text)
+    download_url = json_var["url"]
+    return download_url
+
+
+def delete_file(self, bucket_id, file_name):
+    logging.info("Delete File")
+    with self.client.delete("/api/buckets/" + bucket_id + "/files/" + file_name,
+                            name='Delete File', headers=self.headers) as response:
+        assert response.status_code == 200
+        json_var = response.json()
+        print("\n delete response: " + str(json_var))
