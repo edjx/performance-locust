@@ -2,12 +2,14 @@ import json
 import logging
 import string
 import random
+import time
+import traceback
 import urllib
 
 from common.modules import *
 from common.utils import *
 import requests
-from locust import HttpUser, SequentialTaskSet, task, constant, tag, TaskSet
+from locust import HttpUser, SequentialTaskSet, task, constant, tag, TaskSet, between
 
 # Define all tasks in task set
 from requests import get
@@ -16,7 +18,7 @@ from requests import get
 class Function(SequentialTaskSet):
     # Constant(wait_time), Constant_pacing(wait_time), between(min, max),
     # These function inject time b/w tasks
-    wait_time = constant(2)
+    wait_time = between(2, 4)
 
     def __init__(self, parent):
         print("init function \n")
@@ -25,6 +27,7 @@ class Function(SequentialTaskSet):
         self.org_id = ""
         self.app_id = ""
         self.func_name = ""
+        self.bucket_id = ""
         self.func_execute_url = ""
         self.headers = {}
 
@@ -38,41 +41,53 @@ class Function(SequentialTaskSet):
             "Content-Type": "application/json"
         }
 
+        # Create Application and Bucket
+        self.app_id = create_applications(self, self.org_id)
+        self.bucket_id = create_bucket(self, self.org_id)
+
     @tag('e2e_function')
     @task
     def e2e_function_executor(self):
-        app_id = create_applications(self, self.org_id)
-        read_all_applications(self)
-        func_name = create_deploy_functions(self, app_id)
-        func_execute_url = get_url_from_function(self, app_id, func_name)
-
-        response = self.client.get(func_execute_url, name='Function Executor', )
-        assert response.text == "Hello World"
-
-        delete_function(self, app_id, func_name)
-        delete_applications(self, app_id)
+        try:
+            read_all_applications(self)
+            func_name = create_deploy_functions(self, self.app_id)
+            func_execute_url = get_url_from_function(self, self.app_id, func_name)
+            logging.info("Func Exe URL: %s", func_execute_url)
+            time.sleep(1)
+            response = self.client.get(func_execute_url, name='Function Executor', )
+            assert response.text == "Hello World"
+            # delete_function(self, self.app_id, func_name)
+        except Exception as e:
+            traceback.print_exc()
+            print("Exception occured: ", e)
 
     @tag('e2e_bucket')
     @task
     def e2e_file_upload(self):
-        # Create resource
-        bucket_id = create_bucket(self, self.org_id)
-        filename = upload_file(self, bucket_id)
-        download_url = get_url_from_file(self, bucket_id, filename)
-        # print("download URL,--> ", download_url)
+        try:
+            filename = upload_file(self, self.bucket_id)
+            download_url = get_url_from_file(self, self.bucket_id, filename)
+            logging.info("File download url: %s", download_url)
 
-        # Download file
-        with self.client.get(download_url, name='File Download') as response:
-            assert response.status_code == 200
-            # print("download URL response -->", response.status_code)
-            logging.info("file downloaded successfully")
+            # Download file
+            time.sleep(1)
+            with self.client.get(download_url, name='File Download') as response:
+                assert response.status_code == 200
+                # print("download URL response -->", response.status_code)
+                logging.info("file downloaded successfully")
+        except Exception as e:
+            traceback.print_exc()
+            print("Exception occured: ", e)
 
         # Delete resources
-        delete_file(self, bucket_id, filename)
-        delete_bucket(self, bucket_id)
+        # delete_file(self, self.bucket_id, filename)
 
-    # def on_stop(self):
-    #     self.delete_applications(self.app_id)
+    def on_stop(self):
+        if len(self.app_id) != 0:
+            delete_applications(self, self.app_id)
+
+        if len(self.bucket_id) != 0:
+            delete_bucket(self, self.bucket_id)
 
 
 class Resources(TaskSet):
@@ -98,4 +113,4 @@ class Resources(TaskSet):
 
 class TaskExecutor(HttpUser):
     host = "https://api.load.edjx.network"
-    tasks = [Function, Resources]
+    tasks = [Function]

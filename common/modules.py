@@ -16,7 +16,7 @@ def login_user(self):
     json_var = response.json()
 
     organizations = json_var["organizations"]
-    org_id = organizations[2]["id"]
+    org_id = organizations[1]["id"]
     return json_var["token"], org_id
 
 
@@ -65,6 +65,7 @@ def create_deploy_functions(self, app_id):
                                 headers=self.headers,
                                 data=payload)
     json_var = response.json()
+    # logging.info("\n Create function response: %s", response.content)
     func_name = json_var["name"]
 
     deploy_section = json_var["deploy"]
@@ -93,9 +94,10 @@ def create_deploy_functions(self, app_id):
 
     response = self.client.put(deploy_url, name='Deploy Function', headers=headers, data=payload, files=files)
     json_var = response.json()
+    # logging.info("\n\n Deploy function response: %s", response.content)
     status = json_var["status"]
     assert status == "accepted"
-    print(func_name + " :is Deployed")
+    # print(func_name + " :is Deployed")
     return func_name
 
 
@@ -161,10 +163,7 @@ def upload_file(self, bucket_id):
                 "key": "Content-Type",
                 "value": "image/jpeg"
             }
-        ],
-        "status": "success",
-        "cid": "123s4588",
-        "size": 4357
+        ]
     })
 
     # Create file
@@ -173,6 +172,7 @@ def upload_file(self, bucket_id):
                                 headers=self.headers,
                                 data=payload)
     json_var = response.json()
+    # logging.info("\n Create file response: %s", response.content)
     file_name = json_var["name"]
 
     # Get upload and call back url
@@ -196,7 +196,8 @@ def upload_file(self, bucket_id):
     response = self.client.put(upload_url, name='Upload File', headers=headers, data=payload, files=files)
     json_var = response.json()
     status = json_var["status"]
-    print(response.text)
+    # print("Upload file response", response.content)
+    # logging.info("\n Upload file response: %s", response.content)
     assert status == "accepted"
 
     print(file_name + " : File is uploaded")
