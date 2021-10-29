@@ -70,12 +70,7 @@ class Function(SequentialTaskSet):
             time.sleep(1) # wait for data updation
             download_url = get_url_from_file(self, self.bucket_id, filename)
             logging.info("File download url: %s", download_url)
-
-            # Download file
-            with self.client.get(download_url, name='File Download') as response:
-                assert response.status_code == 200
-                # print("download URL response -->", response.status_code)
-                logging.info("file downloaded successfully")
+            download_file(self, download_url)
         except Exception as e:
             traceback.print_exc()
             print("Exception occured: ", e)
