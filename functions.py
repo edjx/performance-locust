@@ -29,7 +29,7 @@ class Function(SequentialTaskSet):
         self.headers = {}
 
     def on_start(self):
-        print("On Start \n")
+        logging.info("On Start \n")
         self.token_string, self.org_id = login_user(self)
         # print("\n OrgID -->", self.org_id)
         self.headers = {
@@ -51,13 +51,13 @@ class Function(SequentialTaskSet):
             func_execute_url = get_url_from_function(self, self.app_id, func_name)
             logging.info("Func Exe URL: %s", func_execute_url)
             time.sleep(1)
-            response = self.client.get(func_execute_url, name='Function Executor', )
+            response = self.client.get(func_execute_url, name='Function Executor')
             assert response.text == "Hello World"
             # delete_function(self, self.app_id, func_name)
         except Exception as e:
             traceback.print_exc()
-            print("Exception occured: ", e)
-        self.interrupt()
+            logging.exception("Exception occurred: %s", e)
+        self.interrupt(reschedule=False)  # To exit execution so that other class can pick
 
     @tag('e2e_bucket')
     @task
@@ -71,11 +71,11 @@ class Function(SequentialTaskSet):
             download_file(self, download_url)
         except Exception as e:
             traceback.print_exc()
-            print("Exception occured: ", e)
+            logging.exception("Exception occurred: %s", e)
 
         # Delete resources
         # delete_file(self, self.bucket_id, filename)
-        self.interrupt()
+        self.interrupt(reschedule=False)
 
     def on_stop(self):
         if len(self.app_id) != 0:
@@ -104,9 +104,9 @@ class Resources(TaskSet):
             print('\nURL: ' + func_url)
             print('Serving Node: ' + remote_address + ' (' + get_current_node(remote_address) + ')\n')
             assert response.text == "Hello World"
-        self.interrupt()  # To exit execution so that other class can pick
+        self.interrupt(reschedule=False)  # To exit execution so that other class can pick
 
-    # @tag('FileUpDown')
+    # @tag('files')
     # @task
     # def file_upload_download(self):
     #     bucket_id = "9e5d0108-cae7-492e-adad-1e6c93bbec4e"
@@ -121,8 +121,7 @@ class Resources(TaskSet):
 
 
 class TaskExecutor(HttpUser):
-    host = "https://api.load.edjx.network"
-    tasks = [Function]
+    tasks = [Function, Resources]
     # Constant(wait_time), Constant_pacing(wait_time), between(min, max),
     # These function inject time b/w tasks
     wait_time = between(2, 4)
