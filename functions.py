@@ -82,8 +82,8 @@ class Function(SequentialTaskSet):
         if len(self.app_id) != 0:
             delete_applications(self, self.app_id)
 
-        # if len(self.bucket_id) != 0:
-        #     delete_bucket(self, self.bucket_id)
+        if len(self.bucket_id) != 0:
+            delete_bucket(self, self.bucket_id)
 
 
 class Resources(TaskSet):
@@ -123,4 +123,4 @@ class Resources(TaskSet):
 
 class TaskExecutor(HttpUser):
     host = "https://api.load.edjx.network"
-    tasks = [Function, Resources]
+    tasks = [Function]
