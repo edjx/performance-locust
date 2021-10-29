@@ -65,12 +65,13 @@ class Function(SequentialTaskSet):
     @task
     def e2e_file_upload(self):
         try:
+            # self.bucket_id = "9e5d0108-cae7-492e-adad-1e6c93bbec4e"
             filename = upload_file(self, self.bucket_id)
+            time.sleep(1) # wait for data updation
             download_url = get_url_from_file(self, self.bucket_id, filename)
             logging.info("File download url: %s", download_url)
 
             # Download file
-            time.sleep(1)
             with self.client.get(download_url, name='File Download') as response:
                 assert response.status_code == 200
                 # print("download URL response -->", response.status_code)
@@ -86,8 +87,8 @@ class Function(SequentialTaskSet):
         if len(self.app_id) != 0:
             delete_applications(self, self.app_id)
 
-        if len(self.bucket_id) != 0:
-            delete_bucket(self, self.bucket_id)
+        # if len(self.bucket_id) != 0:
+        #     delete_bucket(self, self.bucket_id)
 
 
 class Resources(TaskSet):
@@ -109,6 +110,20 @@ class Resources(TaskSet):
             print('\nURL: ' + func_url)
             print('Serving Node: ' + remote_address + ' (' + get_current_node(remote_address) + ')\n')
             assert response.text == "Hello World"
+
+    # @tag('FileUpDown')
+    # @task
+    # def file_upload_download(self):
+    #     bucket_id = "9e5d0108-cae7-492e-adad-1e6c93bbec4e"
+    #
+    #     filename = upload_file(self, bucket_id)
+    #     download_url = get_url_from_file(self, bucket_id, filename)
+    #     logging.info("File download url: %s", download_url)
+    #     time.sleep(1)
+    #     download_file(self,download_url)
+    #     # Delete resources
+    #     # delete_file(self, bucket_id, filename)
+
 
 
 class TaskExecutor(HttpUser):

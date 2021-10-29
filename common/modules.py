@@ -16,7 +16,7 @@ def login_user(self):
     json_var = response.json()
 
     organizations = json_var["organizations"]
-    org_id = organizations[1]["id"]
+    org_id = organizations[2]["id"]
     return json_var["token"], org_id
 
 
@@ -141,6 +141,8 @@ def create_bucket(self, org_id):
     })
     response = self.client.post("/api/buckets", name='Create Bucket', headers=self.headers, data=payload)
     json_var = response.json()
+    bucket_name = json_var["name"]
+    logging.info("%s :Bucket is Create", bucket_name)
     # print("bucket create response: ", response.text)
     return json_var["id"]
 
@@ -209,7 +211,7 @@ def get_url_from_file(self, bucket_id, file_name):
     response = self.client.get("/api/buckets/" + bucket_id + "/files/" + file_name,
                                name='Read File', headers=self.headers)
     json_var = response.json()
-    # print("get_url_from_function response" + response.text)
+    # logging.info("\n Get Url from file: %s", response.content)
     download_url = json_var["url"]
     return download_url
 
@@ -221,3 +223,10 @@ def delete_file(self, bucket_id, file_name):
         assert response.status_code == 200
         json_var = response.json()
         print("\n delete response: " + str(json_var))
+
+
+def download_file(self, download_url):
+    with self.client.get(download_url, name='File Download') as response:
+        assert response.status_code == 200
+        # print("download URL response -->", response.status_code)
+        logging.info("file downloaded successfully")
