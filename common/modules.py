@@ -37,7 +37,7 @@ def create_applications(self, org_id):
         "organization": "" + org_id + "",
         "status": "active"
     })
-    print("Create Application")
+    logging.info("Create Application")
     response = self.client.post("/api/applications", name='Create Application', headers=self.headers, data=payload)
     json_var = response.json()
     # print(response.text)
@@ -59,7 +59,7 @@ def create_deploy_functions(self, app_id):
         },
         "policies": []
     })
-    print("Create function")
+    logging.info("Create function")
     response = self.client.post("/api/applications/" + app_id + "/deployments",
                                 name='Create Function',
                                 headers=self.headers,
@@ -78,7 +78,7 @@ def create_deploy_functions(self, app_id):
     # print("\n callback url: " + callback_url)
 
     # deploy
-    print("Deploy function")
+    logging.info("Deploy function")
     filename = 'hello_world.wasm'
     payload = {'peer-addrs': '',
                'notary': 'false',
@@ -102,7 +102,7 @@ def create_deploy_functions(self, app_id):
 
 
 def get_url_from_function(self, app_id, func_name):
-    print("Get execute URL from function" + func_name)
+    logging.info("Get execute URL from function %s", func_name)
     response = self.client.get("/api/applications/" + app_id + "/functions/" + func_name,
                                name='Read Function', headers=self.headers)
     json_var = response.json()
@@ -113,19 +113,19 @@ def get_url_from_function(self, app_id, func_name):
 
 
 def delete_applications(self, app_id):
-    print("delete applications")
+    logging.info("Delete Application")
     response = self.client.delete("/api/applications/" + app_id, name='Delete Application', headers=self.headers)
     json_var = response.json()
-    print("\n delete response: " + str(json_var))
+    logging.info("\n Delete application response: %s",  str(json_var))
 
 
 def delete_function(self, app_id, func_name):
-    print("delete applications")
+    logging.info("Delete Function")
     response = self.client.delete("/api/applications/" + app_id + "/functions/" + func_name,
                                   name='Delete Function',
                                   headers=self.headers)
     json_var = response.json()
-    print("\n delete response: " + str(json_var))
+    logging.info("\n Delete function response: %s",  str(json_var))
 
 
 # ******* All things Buckets *******#
@@ -142,7 +142,7 @@ def create_bucket(self, org_id):
     response = self.client.post("/api/buckets", name='Create Bucket', headers=self.headers, data=payload)
     json_var = response.json()
     bucket_name = json_var["name"]
-    logging.info("%s :Bucket is Create", bucket_name)
+    logging.info("%s :Bucket is Created", bucket_name)
     # print("bucket create response: ", response.text)
     return json_var["id"]
 
@@ -151,7 +151,7 @@ def delete_bucket(self, bucket_id):
     logging.info("Delete bucket")
     response = self.client.delete("/api/buckets/" + bucket_id, name='Delete Bucket', headers=self.headers)
     json_var = response.json()
-    print("\n delete response: " + str(json_var))
+    logging.info("\n Delete bucket response: %s", str(json_var))
 
 
 def upload_file(self, bucket_id):
@@ -202,12 +202,12 @@ def upload_file(self, bucket_id):
     # logging.info("\n Upload file response: %s", response.content)
     assert status == "accepted"
 
-    print(file_name + " : File is uploaded")
+    logging.info(file_name, "%s :File is uploaded")
     return file_name
 
 
 def get_url_from_file(self, bucket_id, file_name):
-    print("Get download URL from file: " + file_name)
+    logging.info("Get download URL from file: %s", file_name)
     response = self.client.get("/api/buckets/" + bucket_id + "/files/" + file_name,
                                name='Read File', headers=self.headers)
     json_var = response.json()
@@ -222,7 +222,7 @@ def delete_file(self, bucket_id, file_name):
                             name='Delete File', headers=self.headers) as response:
         assert response.status_code == 200
         json_var = response.json()
-        print("\n delete response: " + str(json_var))
+        logging.info("\n Delete file response: %s", str(json_var))
 
 
 def download_file(self, download_url):
