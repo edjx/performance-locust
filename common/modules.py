@@ -8,7 +8,7 @@ from common.utils import *
 def login_user(self):
     response = self.client.post("/guest/login", json=
     {
-        "email": "manualtest2@mailinator.com",
+        "email": "edjperformance@mailinator.com",
         "password": "Hello@123"
     },
                                 name='Login')
@@ -19,7 +19,7 @@ def login_user(self):
         json_var = response.json()
 
         organizations = json_var["organizations"]
-        org_id = organizations[1]["id"]
+        org_id = organizations[0]["id"]
         return json_var["token"], org_id
     else:
         logging.info("Unable to login: %s", response.content)

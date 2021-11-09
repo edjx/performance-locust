@@ -90,10 +90,10 @@ class Resources(TaskSet):
     @tag('executor')
     @task
     def function_executor(self):
-        # https://90fbe12c-a727-4291-bb6f-6407016669fa--ttrkr.fn.load.edjx.network/HelloWorld2
-        uuid = "90fbe12c-a727-4291-bb6f-6407016669fa"
+        # https://60ede549-9b58-4245-a2cf-0e929fe341f2.fn.load.edjx.network/HelloWorld
+        uuid = "60ede549-9b58-4245-a2cf-0e929fe341f2"
         const_host = ".fn.load.edjx.network"
-        func_name = "/HelloWorld2"
+        func_name = "/HelloWorld"
         # geohash = 'ttqds'
         geohash = random.choice(get_geohash('Global'))
 
