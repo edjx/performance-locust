@@ -12,15 +12,19 @@ def login_user(self):
         "password": "Hello@123"
     },
                                 name='Login')
-    # fetch token and org
-    json_var = response.json()
+    # status_code = response.status_code
+    if response.status_code == 201:
+        logging.info("User logged in")
+        # fetch token and org
+        json_var = response.json()
 
-    organizations = json_var["organizations"]
-    org_id = organizations[2]["id"]
-    return json_var["token"], org_id
+        organizations = json_var["organizations"]
+        org_id = organizations[1]["id"]
+        return json_var["token"], org_id
+    else:
+        logging.info("Unable to login: %s", response.content)
 
-
-# ******* All things Applications *******#
+    # ******* All things Applications *******#
 
 def read_all_applications(self):
     logging.info("Read applications")
@@ -202,7 +206,7 @@ def upload_file(self, bucket_id):
     # logging.info("\n Upload file response: %s", response.content)
     assert status == "accepted"
 
-    logging.info(file_name, "%s :File is uploaded")
+    logging.info("%s :File is uploaded", file_name)
     return file_name
 
 
