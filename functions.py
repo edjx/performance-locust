@@ -99,11 +99,25 @@ class Resources(TaskSet):
 
         func_url = "https://" + uuid + "--" + geohash + const_host + func_name
         # print('URL->' + func_url)
-        with self.client.get(func_url, catch_response=True, name='Function Executor', stream=True) as response:
+        print("\n[FUNCTION EXECUTOR]")
+        response = execute_function_url(self, func_url)
+
+        assert response.text == "Hello World"
+        self.interrupt(reschedule=False)  # To exit execution so that other class can pick
+
+    @tag('cdn')
+    @task
+    def cdn_executor(self):
+        url = "http://xyz.mishyan.com/"
+        with self.client.get(url, catch_response=True, name='CDN', stream=True) as response:
+            assert response.status_code == 200
+            assert response.headers.get('Server') == "EDJX"
             remote_address, port = response.raw._connection.sock.getpeername()
-            print('\nURL: ' + func_url)
-            print('Serving Node: ' + remote_address + ' (' + get_current_node(remote_address) + ')\n')
-            assert response.text == "Hello World"
+            print("\n[CDN]")
+            logging.info("URL: %s", url)
+            logging.info("URL response code: %s", response.status_code)
+            logging.info('Serving Node: ' + remote_address + ' (' + get_current_node(remote_address) + ')')
+            logging.info("X-Cache-Status: %s \n", response.headers.get('X-Cache-Status'))
         self.interrupt(reschedule=False)  # To exit execution so that other class can pick
 
     # @tag('files')

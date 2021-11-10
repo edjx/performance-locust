@@ -26,6 +26,7 @@ def login_user(self):
 
     # ******* All things Applications *******#
 
+
 def read_all_applications(self):
     logging.info("Read applications")
     with self.client.get("/api/applications?limit=1", headers=self.headers,
@@ -120,7 +121,7 @@ def delete_applications(self, app_id):
     logging.info("Delete Application")
     response = self.client.delete("/api/applications/" + app_id, name='Delete Application', headers=self.headers)
     json_var = response.json()
-    logging.info("\n Delete application response: %s",  str(json_var))
+    logging.info("\n Delete application response: %s", str(json_var))
 
 
 def delete_function(self, app_id, func_name):
@@ -129,7 +130,15 @@ def delete_function(self, app_id, func_name):
                                   name='Delete Function',
                                   headers=self.headers)
     json_var = response.json()
-    logging.info("\n Delete function response: %s",  str(json_var))
+    logging.info("\n Delete function response: %s", str(json_var))
+
+
+def execute_function_url(self, func_url):
+    with self.client.get(func_url, catch_response=True, name='Function Executor', stream=True) as response:
+        remote_address, port = response.raw._connection.sock.getpeername()
+        logging.info('URL: %s', func_url)
+        logging.info('Serving Node: ' + remote_address + ' (' + get_current_node(remote_address) + ')\n')
+        return response
 
 
 # ******* All things Buckets *******#
