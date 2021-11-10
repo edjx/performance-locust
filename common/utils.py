@@ -19,8 +19,9 @@ def get_geohash(location):
 
 
 def get_current_node(ip_address):
-    load_nodes = {'64.227.186.81': 'Banglore',
-                  '64.227.176.181': 'Banglore',
+    load_nodes = {'64.227.186.81': 'Bangalore',
+                  '64.227.176.181': 'Bangalore',
+                  '68.183.81.151': 'Bangalore',
                   '167.71.183.84': 'New York',
                   '134.122.3.240': 'New York',
                   '137.184.10.253': 'San Francisco',
@@ -29,3 +30,5 @@ def get_current_node(ip_address):
                   '165.232.129.105': 'San Francisco'
                   }
     return load_nodes[ip_address]
+
+# 878f21c8-5f9d-49cd-b28b-fa893810e420--dqcjr.fn.load.edjx.network
