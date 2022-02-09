@@ -134,8 +134,36 @@ class Resources(TaskSet):
     #     # delete_file(self, bucket_id, filename)
 
 
+class Edjapi(TaskSet):
+
+    def __init__(self, parent):
+        print("init function \n")
+        super().__init__(parent)
+        self.token_string = ""
+        self.org_id = ""
+
+    def on_start(self):
+        logging.info("On Start \n")
+        self.token_string, self.org_id = login_user(self)
+        # print("\n OrgID -->", self.org_id)
+        self.headers = {
+            'Authorization': 'Bearer ' + self.token_string,
+            'Accept': 'application/ion+json',
+            "Content-Type": "application/json"
+        }
+
+    @tag('app_crud')
+    @task
+    def app_crud(self):
+        app_id = create_applications(self, self.org_id)
+        read_application(self, app_id)
+        update_application(self, app_id)
+        read_all_applications(self)
+        delete_applications(self, app_id)
+
+
 class TaskExecutor(HttpUser):
-    tasks = [Function, Resources]
+    tasks = [Function, Resources, Edjapi]
     # Constant(wait_time), Constant_pacing(wait_time), between(min, max),
     # These function inject time b/w tasks
     wait_time = between(2, 4)

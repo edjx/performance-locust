@@ -28,11 +28,32 @@ def login_user(self):
 
 
 def read_all_applications(self):
-    logging.info("Read applications")
+    logging.info("List applications")
     with self.client.get("/api/applications?limit=1", headers=self.headers,
-                         name='Read Applications') as response:
+                         name='List Applications') as response:
         response.status_code = 200
     # print("\n response: " + response.text)
+
+
+def read_application(self, app_id):
+    logging.info("Read application")
+    with self.client.get("/api/applications/" + app_id, headers=self.headers,
+                         name='List Applications') as response:
+        response.status_code = 200
+
+
+def update_application(self, app_id):
+    random_name = id_generator(3)
+    payload = json.dumps({
+        "name": random_name + "afterUpdate",
+        "status": "active"
+    })
+
+    logging.info("Update application")
+    with self.client.put("/api/applications/" + app_id, headers=self.headers,
+                         name='Update Application', data=payload) as response:
+        print(response.text)
+        response.status_code = 200
 
 
 def create_applications(self, org_id):
@@ -120,8 +141,9 @@ def get_url_from_function(self, app_id, func_name):
 def delete_applications(self, app_id):
     logging.info("Delete Application")
     response = self.client.delete("/api/applications/" + app_id, name='Delete Application', headers=self.headers)
-    json_var = response.json()
-    logging.info("\n Delete application response: %s", str(json_var))
+    # json_var = response.json()
+    # logging.info("\n Delete application response: %s", str(json_var))
+    response.status_code = 200
 
 
 def delete_function(self, app_id, func_name):
