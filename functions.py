@@ -136,12 +136,15 @@ class Resources(TaskSet):
 
 class Edjapi(TaskSet):
 
+    # Global variable for test
     def __init__(self, parent):
         print("init function \n")
         super().__init__(parent)
         self.token_string = ""
         self.org_id = ""
+        self.headers = {}
 
+    # Pre test
     def on_start(self):
         logging.info("On Start \n")
         self.token_string, self.org_id = login_user(self)
@@ -158,8 +161,17 @@ class Edjapi(TaskSet):
         app_id = create_applications(self, self.org_id)
         read_application(self, app_id)
         update_application(self, app_id)
-        read_all_applications(self)
         delete_applications(self, app_id)
+        read_all_applications(self)
+
+    @tag('buk_crud')
+    @task
+    def app_crud(self):
+        bucket_id = create_bucket(self, self.org_id)
+        read_bucket(self, bucket_id)
+        update_bucket(self, bucket_id)
+        delete_bucket(self, bucket_id)
+        read_all_buckets(self)
 
 
 class TaskExecutor(HttpUser):

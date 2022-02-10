@@ -28,7 +28,7 @@ def login_user(self):
 
 
 def read_all_applications(self):
-    logging.info("List applications")
+    logging.info("List Applications")
     with self.client.get("/api/applications?limit=50", headers=self.headers,
                          name='List Applications') as response:
         response.status_code = 200
@@ -36,7 +36,7 @@ def read_all_applications(self):
 
 
 def read_application(self, app_id):
-    logging.info("Read application")
+    logging.info("Read Application")
     with self.client.get("/api/applications/" + app_id, headers=self.headers,
                          name='List Applications') as response:
         response.status_code = 200
@@ -49,7 +49,7 @@ def update_application(self, app_id):
         "status": "active"
     })
 
-    logging.info("Update application")
+    logging.info("Update Application")
     with self.client.put("/api/applications/" + app_id, headers=self.headers,
                          name='Update Application', data=payload) as response:
         # print(response.text)
@@ -166,7 +166,7 @@ def execute_function_url(self, func_url):
 # ******* All things Buckets *******#
 
 def create_bucket(self, org_id):
-    logging.info("Create bucket")
+    logging.info("Create Bucket")
     random_name = "load_" + id_generator(3)
     payload = json.dumps({
         "name": random_name,
@@ -176,17 +176,17 @@ def create_bucket(self, org_id):
     })
     response = self.client.post("/api/buckets", name='Create Bucket', headers=self.headers, data=payload)
     json_var = response.json()
-    bucket_name = json_var["name"]
-    logging.info("%s :Bucket is Created", bucket_name)
+    # bucket_name = json_var["name"]
+    # logging.info("%s :Bucket is Created", bucket_name)
     # print("bucket create response: ", response.text)
     return json_var["id"]
 
 
 def delete_bucket(self, bucket_id):
-    logging.info("Delete bucket")
+    logging.info("Delete Bucket")
     response = self.client.delete("/api/buckets/" + bucket_id, name='Delete Bucket', headers=self.headers)
     json_var = response.json()
-    logging.info("\n Delete bucket response: %s", str(json_var))
+    # logging.info("\n Delete bucket response: %s", str(json_var))
 
 
 def upload_file(self, bucket_id):
@@ -265,3 +265,32 @@ def download_file(self, download_url):
         assert response.status_code == 200
         # print("download URL response -->", response.status_code)
         logging.info("file downloaded successfully")
+
+
+def read_bucket(self, bucket_id):
+    logging.info("Read Bucket")
+    with self.client.get("/api/buckets/" + bucket_id, headers=self.headers,
+                         name='Read Bucket') as response:
+        response.status_code = 200
+
+
+def update_bucket(self, bucket_id):
+    random_name = id_generator(3)
+    payload = json.dumps({
+        "name": random_name + "afterUpdate",
+        "description": "from Locust load"
+    })
+
+    logging.info("Update Bucket")
+    with self.client.put("/api/buckets/" + bucket_id, headers=self.headers,
+                         name='Update Bucket', data=payload) as response:
+        # print(response.text)
+        response.status_code = 200
+
+
+def read_all_buckets(self):
+    logging.info("List Buckets")
+    with self.client.get("/api/buckets?limit=50", headers=self.headers,
+                         name='List Buckets') as response:
+        response.status_code = 200
+    # print("\n response: " + response.text)
