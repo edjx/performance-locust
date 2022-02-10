@@ -52,7 +52,7 @@ def update_application(self, app_id):
     logging.info("Update application")
     with self.client.put("/api/applications/" + app_id, headers=self.headers,
                          name='Update Application', data=payload) as response:
-        print(response.text)
+        # print(response.text)
         response.status_code = 200
 
 
