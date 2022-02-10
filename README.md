@@ -57,4 +57,4 @@ http://docs.locust.io/en/stable/
 
 ## Authors: 
 
-@edjx/qa-team
+@edjx/qa
