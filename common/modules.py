@@ -29,7 +29,7 @@ def login_user(self):
 
 def read_all_applications(self):
     logging.info("List applications")
-    with self.client.get("/api/applications?limit=1", headers=self.headers,
+    with self.client.get("/api/applications?limit=50", headers=self.headers,
                          name='List Applications') as response:
         response.status_code = 200
     # print("\n response: " + response.text)
