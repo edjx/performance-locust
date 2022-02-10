@@ -37,7 +37,8 @@ locust -f load_tests.py --tags executor --headless -u 1 -r 1 --run-time 10s
 locust -f load_tests.py --tags cdn --headless -u 1 -r 1 --run-time 10s
 ```
 
-Quick Read on Terminologies used for Report Analysis
+
+### Quick Read for Analysis
 * Request — Total number of requests made so far
 * Fails — Number of requests that have failed
 * Median — Response speed for 50 percentile in ms
@@ -48,6 +49,7 @@ Quick Read on Terminologies used for Report Analysis
 * Average bytes — Average response size in bytes
 * Current RPS — Current requests per second
 * Current Failure/s — Total number of failures per second
+
 
 ### References:
 https://locust.io/
