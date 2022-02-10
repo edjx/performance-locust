@@ -15,7 +15,7 @@ from locust import HttpUser, SequentialTaskSet, task, constant, tag, TaskSet, be
 from requests import get
 
 
-class Function(SequentialTaskSet):
+class LoadE2E(SequentialTaskSet):
 
     def __init__(self, parent):
         print("init function \n")
@@ -85,7 +85,7 @@ class Function(SequentialTaskSet):
             delete_bucket(self, self.bucket_id)
 
 
-class Resources(TaskSet):
+class DirectLoad(TaskSet):
 
     @tag('executor')
     @task
@@ -157,25 +157,27 @@ class Edjapi(TaskSet):
 
     @tag('app_crud')
     @task
-    def app_crud(self):
+    def application(self):
         app_id = create_applications(self, self.org_id)
         read_application(self, app_id)
         update_application(self, app_id)
         delete_applications(self, app_id)
         read_all_applications(self)
+        self.interrupt(reschedule=False)  # To exit execution so that other class can pick
 
     @tag('buk_crud')
     @task
-    def app_crud(self):
+    def buckets(self):
         bucket_id = create_bucket(self, self.org_id)
         read_bucket(self, bucket_id)
         update_bucket(self, bucket_id)
         delete_bucket(self, bucket_id)
         read_all_buckets(self)
+        self.interrupt(reschedule=False)  # To exit execution so that other class can pick
 
 
 class TaskExecutor(HttpUser):
-    tasks = [Function, Resources, Edjapi]
+    tasks = [LoadE2E, DirectLoad, Edjapi]
     # Constant(wait_time), Constant_pacing(wait_time), between(min, max),
     # These function inject time b/w tasks
     wait_time = between(2, 4)
